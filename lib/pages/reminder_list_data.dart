@@ -69,7 +69,7 @@ class _ReminderListDataState extends State<ReminderListData> {
       child: new GestureDetector(
         onTap: () => Navigator.of(context).pushReplacement(new MaterialPageRoute(
             builder: (BuildContext context) => new Detail(
-              id: data.id.toString(),
+              id: data.notifId.toString(),
             ))),
         child: new Card(
           color: Colors.white,

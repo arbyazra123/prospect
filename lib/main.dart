@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -67,7 +68,9 @@ class MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   List dataJson = [];
   List<Map<String, dynamic>> weekdayDataList = [];
   List<Notif> dataNotificationJson = [];
+
   List menu = ["Home", "Reminder List"];
+
   List days = [
     "Sunday",
     "Monday",
@@ -195,9 +198,9 @@ class MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       var fetch = jsonDecode(r.body);
       if (r.statusCode == 200) {
         setState(() {
-          if(int.parse(element.day)-1==DateTime.now().weekday) {
-          weekdayDataList
-              .add({"prospect": Prospect.fromJson(fetch), "notif": element});
+          if (int.parse(element.day) - 1 == DateTime.now().weekday) {
+            weekdayDataList
+                .add({"prospect": Prospect.fromJson(fetch), "notif": element});
           }
         });
       }
@@ -222,60 +225,59 @@ class MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
       build: (context) => [
         pdfLib.Header(text: "Today is ${days[DateTime.now().weekday]}"),
         pdfLib.Table.fromTextArray(
-
             context: context,
             margin: pdfLib.EdgeInsets.all(3),
             data: <List<String>>[
-          <String>[
-            "No",
-            'Nama',
-            "No Telp",
-            "Tipe Mobil",
-            "Keterangan",
-            "Status Prospek",
-            "Tanggal Reminder"
-          ],
-          ...weekdayDataList.map((e) => [
-                (weekdayDataList.indexOf(e) + 1).toString(),
-                e["prospect"].nama,
-                e['prospect'].nohp,
-                e['prospect'].tipe_kendaraan,
-                e['prospect'].keterangan,
-                e['prospect'].prospek,
-                "${days[int.parse(e['notif'].day)-1]}, ${e['notif'].time}"
-              ])
-        ])
+              <String>[
+                "No",
+                'Nama',
+                "No Telp",
+                "Tipe Mobil",
+                "Keterangan",
+                "Status Prospek",
+                "Tanggal Reminder"
+              ],
+              ...weekdayDataList.map((e) => [
+                    (weekdayDataList.indexOf(e) + 1).toString(),
+                    e["prospect"].nama,
+                    e['prospect'].nohp,
+                    e['prospect'].tipe_kendaraan,
+                    e['prospect'].keterangan,
+                    e['prospect'].prospek,
+                    "${days[int.parse(e['notif'].day) - 1]}, ${e['notif'].time}"
+                  ])
+            ])
       ],
     ));
 
     var dir;
     var fileName = "Prospek_${days[DateTime.now().weekday]}_"
-    "${DateTime.now().year}${DateTime.now().month}${DateTime.now().day}_"
+        "${DateTime.now().year}${DateTime.now().month}${DateTime.now().day}_"
         "${DateTime.now().hour}${DateTime.now().minute}${DateTime.now().second}.pdf";
-    if(Platform.isAndroid){
-      final folderName="Prospek";
-      final path= Directory("storage/emulated/0/$folderName");
-      if ((await path.exists())){
+    if (Platform.isAndroid) {
+      final folderName = "Prospek";
+      final path = Directory("storage/emulated/0/$folderName");
+      if ((await path.exists())) {
         print("exist");
-      }else{
+      } else {
         print("not exist");
         path.create();
       }
-      dir =path.path+"/$fileName";
-
+      dir = path.path + "/$fileName";
     } else {
-     dir = (await getApplicationDocumentsDirectory()).path;
-
+      dir = (await getApplicationDocumentsDirectory()).path;
     }
     final File file = File(dir);
     await file.writeAsBytes(pdf.save());
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => PdfViewerPage(path: dir,title: fileName,),
+        builder: (_) => PdfViewerPage(
+          path: dir,
+          title: fileName,
+        ),
       ),
     );
     CustomWidget.showFlushBar(context, "File saved...");
-
   }
 
   @override
@@ -353,12 +355,61 @@ class MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               Padding(
                 padding:
                     const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
-                child: TextFormField(
-                  controller: searchTec,
-                  decoration: InputDecoration(
-                      suffixIcon: IconButton(
-                          icon: Icon(Icons.search), onPressed: () {}),
-                      hintText: "Search..."),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: searchTec,
+                        decoration: InputDecoration(
+                            suffixIcon: IconButton(
+                                icon: Icon(Icons.search), onPressed: () {}),
+                            hintText: "Search..."),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        showDialog(context: context,builder: (context) => SimpleDialog(
+                          children: [
+                            ListTile(
+                              title: Text("Urut per hari ini"),
+                              onTap: () {
+                                Navigator.pop(context);
+
+                                setState(() {
+                                  dataJson = dataJson.where((element) =>
+                                  DateTime.parse(element['created_at']).year==DateTime.now().year &&
+                                      DateTime.parse(element['created_at']).day==DateTime.now().day).toList();
+                                });
+
+                              },
+                            ),
+                            
+                            ListTile(
+                              title: Text("Urut per minggu ini"),
+                              onTap: () {
+                                Navigator.pop(context);
+                                setState(() {
+                                  dataJson = dataJson.where((element) =>
+                                  DateTime.parse(element['created_at']).year==DateTime.now().year &&
+                                      weekNumber(DateTime.parse(element['created_at']))==weekNumber(DateTime.now())).toList();
+                                });
+
+                              },
+                            ),
+                            ListTile(
+                              title: Text("Clear filter"),
+                              onTap: () {
+                                Navigator.pop(context);
+                                  _onRefresh();
+                              },
+                            ),
+                            
+                          ],
+                        ),);
+                      },
+                      icon: Icon(Icons.filter_list),
+                    )
+                  ],
                 ),
               ),
               Expanded(
@@ -446,5 +497,10 @@ class MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
         ReminderListData(parent: this),
       ],
     );
+  }
+
+  int weekNumber(DateTime date) {
+    int dayOfYear = int.parse(DateFormat("D").format(date));
+    return ((dayOfYear - date.weekday + 10) / 7).floor();
   }
 }

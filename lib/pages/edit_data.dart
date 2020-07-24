@@ -127,20 +127,21 @@ class _EditDataState extends State<EditData> {
     });
     var r = await http.post(Constants.UPDATE_PROSPECT, body: {
       "id":widget.id,
-      "namaPegawai": namacontroller.text,
-      "tglPegawai": tanggalcontroller.text,
-      "nohpPegawai": nohpcontroller.text,
-      "rencanaPegawai": rencanacontroller.text,
-      "kendaraanPegawai": tipecontroller.text,
-      "alamatPegawai": alamatcontroller.text,
-      "ketPegawai": keterangancontroller.text,
-      "ntbPegawai": ntb.toString(),
-      'ttbPegawai':ttb.toString(),
-      'atbPegawai':atb.toString(),
-      'mtbPegawai':mtb.toString(),
+      "namaProspek": namacontroller.text,
+      "tglProspek": tanggalcontroller.text,
+      "nohpProspek": nohpcontroller.text,
+      "rencanaProspek": rencanacontroller.text,
+      "kendaraanProspek": tipecontroller.text,
+      "alamatProspek": alamatcontroller.text,
+      "ketProspek": keterangancontroller.text,
+      "ntbProspek": ntb.toString(),
+      'ttbProspek':ttb.toString(),
+      'atbProspek':atb.toString(),
+      'mtbProspek':mtb.toString(),
     });
     print(tanggalcontroller.text);
     var data = jsonDecode(r.body);
+    print(r.body);
     if(r.statusCode==200){
       setState(() {
         res = ResponseResult.fromJson(data);
